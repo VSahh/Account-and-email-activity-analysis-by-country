@@ -1,6 +1,23 @@
 # Account and email activity analysis by country
 
-## Query:
+## Overview
+SQL project for analyzing account activity and email engagement metrics by country.
+
+## Metrics
+- Account count
+- Sent emails
+- Opened emails
+- Visited emails
+
+## SQL Concepts Used
+- CTE
+- JOIN
+- UNION ALL
+- Window Functions
+- DENSE_RANK
+- Aggregations
+
+## Logic
 1. Counts the number of accounts by date, country and user parameters.
 2. Counts the number of sent, opened and visited emails.
 3. Combines data about accounts and messages via UNION ALL.
