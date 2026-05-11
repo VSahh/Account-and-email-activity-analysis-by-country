@@ -1,6 +1,6 @@
 # Account and email activity analysis by country
 
-##Query:
+## Query:
 1. Counts the number of accounts by date, country and user parameters.
 2. Counts the number of sent, opened and visited emails.
 3. Combines data about accounts and messages via UNION ALL.
