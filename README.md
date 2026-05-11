@@ -23,7 +23,7 @@ SQL project for analyzing account activity and email engagement metrics by count
 3. Combines data about accounts and messages via UNION ALL.
 4. Aggregates general metrics by country, using window functions to count the total number of accounts and messages by country. 
 5. Creates a ranking of countries by:
- - number of accounts
- - number of sent messages.
+   - number of accounts
+   - number of sent messages.
 6. Returns only the TOP-10 countries by these indicators.
 7. Visualization in [Looker Studio](https://datastudio.google.com/reporting/01a31440-e830-4fc6-b59b-992a668b5384/page/tEnnC)
