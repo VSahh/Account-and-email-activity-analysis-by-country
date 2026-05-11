@@ -9,4 +9,4 @@
 - number of accounts
 - number of sent messages.
 6. Returns only the TOP-10 countries by these indicators.
-7. [Visualization in Looker Studio](https://datastudio.google.com/reporting/01a31440-e830-4fc6-b59b-992a668b5384/page/tEnnC)
+7. Visualization in [Looker Studio](https://datastudio.google.com/reporting/01a31440-e830-4fc6-b59b-992a668b5384/page/tEnnC)
