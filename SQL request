@@ -1,0 +1,127 @@
+-- Counts the number of accounts by date, country and user parameters
+WITH
+  account_info AS (
+    SELECT
+      s.date,
+      country,
+      send_interval,
+      is_verified,
+      is_unsubscribed,
+      COUNT(DISTINCT a.id) AS account_cnt
+    FROM `DA.account` a
+    JOIN `DA.account_session` acs
+      ON a.id = acs.account_id
+    JOIN `DA.session` s
+      ON acs.ga_session_id = s.ga_session_id
+    JOIN `DA.session_params` sp
+      ON acs.ga_session_id = sp.ga_session_id
+    GROUP BY
+      s.date,
+      country,
+      send_interval,
+      is_verified,
+      is_unsubscribed
+  ),
+  -- Counts the number of sent, opened and visited emails
+  message_info AS (
+    SELECT
+      DATE_ADD(s.date, INTERVAL es.sent_date day) AS date,
+      country,
+      send_interval,
+      is_verified,
+      is_unsubscribed,
+      COUNT(DISTINCT es.id_message) AS sent_msg,
+      COUNT(DISTINCT eo.id_message) AS open_msg,
+      COUNT(DISTINCT ev.id_message) AS visit_msg
+    FROM DA.account_session ac
+    JOIN DA.session s
+      ON ac.ga_session_id = s.ga_session_id
+    JOIN DA.account a
+      ON a.id = ac.account_id
+    JOIN DA.session_params sp
+      ON sp.ga_session_id = ac.ga_session_id
+    JOIN DA.email_sent es
+      ON es.id_account = ac.account_id
+    LEFT JOIN
+      DA.email_open eo
+      ON es.id_message = eo.id_message
+    LEFT JOIN DA.email_visit ev
+      ON es.id_message = ev.id_message
+    GROUP BY
+      DATE_ADD(s.date, INTERVAL es.sent_date day),
+      country,
+      send_interval,
+      is_verified,
+      is_unsubscribed
+  ),
+  -- Combines data about accounts and messages via UNION ALL
+  union_data AS (
+    SELECT
+      date,
+      country,
+      send_interval,
+      is_verified,
+      is_unsubscribed,
+      account_cnt,
+      0 AS sent_msg,
+      0 AS open_msg,
+      0 AS visit_msg
+    FROM account_info
+    UNION ALL
+    SELECT
+      date,
+      country,
+      send_interval,
+      is_verified,
+      is_unsubscribed,
+      0 AS account_cnt,
+      sent_msg,
+      open_msg,
+      visit_msg
+    FROM message_info
+  ),
+  -- Aggregates general metrics by country, using window functions to count the total number of accounts and messages by country
+  grup_union AS (
+    SELECT
+      date,
+      country,
+      send_interval,
+      is_verified,
+      is_unsubscribed,
+      SUM(account_cnt) AS account_cnt,
+      SUM(sent_msg) AS sent_msg,
+      SUM(open_msg) AS open_msg,
+      SUM(visit_msg) AS visit_msg,
+      SUM(SUM(account_cnt))
+      OVER (PARTITION BY country) AS total_country_account_cnt,
+      SUM(SUM(sent_msg)) OVER (PARTITION BY country) AS total_country_sent_cnt
+    FROM union_data
+    GROUP BY
+      date,
+      country,
+      send_interval,
+      is_verified,
+      is_unsubscribed
+  ),
+  /* Creates a ranking of countries by:
+    - number of accounts
+    - number of sent messages
+  */
+  ranks AS (
+    SELECT
+      *,
+      DENSE_RANK()
+        OVER (ORDER BY total_country_account_cnt DESC)
+        AS rank_total_country_account_cnt,
+      DENSE_RANK()
+        OVER (ORDER BY total_country_sent_cnt DESC)
+        AS rank_total_country_sent_cnt
+    FROM grup_union
+  )
+-- Returns only the TOP-10 countries by these indicators
+SELECT *
+FROM ranks
+WHERE rank_total_country_account_cnt <= 10 OR rank_total_country_sent_cnt <= 10
+
+
+
